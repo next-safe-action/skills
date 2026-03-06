@@ -7,13 +7,13 @@ Skills for the [next-safe-action](https://github.com/next-safe-action/next-safe-
 Install all skills:
 
 ```bash
-npx skills add next-safe-action/skills
+npx skills add next-safe-action/skills --skill '*'
 ```
 
 Install a specific skill:
 
 ```bash
-npx skills add next-safe-action/skills@safe-action-client
+npx skills add next-safe-action/skills --skill 'safe-action-client'
 ```
 
 Install globally (available across all projects):
