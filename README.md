@@ -1,6 +1,6 @@
 # next-safe-action skills
 
-Skills for the [next-safe-action](https://github.com/TheEdoRan/next-safe-action) library, installable via the [Skills CLI](https://github.com/vercel-labs/skills).
+Skills for the [next-safe-action](https://github.com/next-safe-action/next-safe-action) library, installable via the [Skills CLI](https://github.com/vercel-labs/skills).
 
 ## Installation
 
