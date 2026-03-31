@@ -8,10 +8,10 @@ description: Use when executing next-safe-action actions from React client compo
 ## Import
 
 ```ts
-// Standard hooks
-import { useAction, useOptimisticAction } from "next-safe-action/hooks";
+// All hooks
+import { useAction, useOptimisticAction, useStateAction } from "next-safe-action/hooks";
 
-// Deprecated — use React's useActionState directly instead
+// Backward-compatible re-export (same useStateAction hook)
 import { useStateAction } from "next-safe-action/stateful-hooks";
 ```
 
@@ -80,9 +80,60 @@ export function TodoItem({ todo }: { todo: Todo }) {
 }
 ```
 
+## useStateAction — Quick Start
+
+```tsx
+"use client";
+
+import { useStateAction } from "next-safe-action/hooks";
+import { submitFeedback } from "@/app/actions";
+
+export function FeedbackForm() {
+  const { formAction, result, isPending, hasSucceeded } = useStateAction(submitFeedback, {
+    onSuccess: ({ data }) => {
+      console.log("Submitted:", data);
+    },
+    onError: ({ error }) => {
+      console.error("Failed:", error.serverError);
+    },
+  });
+
+  return (
+    <form action={formAction}>
+      <input name="rating" type="number" min="1" max="5" required />
+      <textarea name="comment" required />
+      <button type="submit" disabled={isPending}>
+        {isPending ? "Submitting..." : "Submit"}
+      </button>
+      {result.validationErrors?.comment && (
+        <p className="error">{result.validationErrors.comment._errors[0]}</p>
+      )}
+      {hasSucceeded && <p className="success">Thank you!</p>}
+    </form>
+  );
+}
+```
+
+The server-side action must use `.stateAction()` (not `.action()`):
+
+```ts
+"use server";
+
+import { z } from "zod";
+import { actionClient } from "@/lib/safe-action";
+
+export const submitFeedback = actionClient
+  .inputSchema(z.object({ rating: z.number().min(1).max(5), comment: z.string() }))
+  .stateAction(async ({ parsedInput }, { prevResult }) => {
+    // prevResult contains the previous SafeActionResult
+    await db.feedback.create({ data: parsedInput });
+    return { rating: parsedInput.rating };
+  });
+```
+
 ## Return Value
 
-Both `useAction` and `useOptimisticAction` return:
+All hooks (`useAction`, `useOptimisticAction`, `useStateAction`) return:
 
 | Property | Type | Description |
 |---|---|---|
@@ -103,11 +154,16 @@ Both `useAction` and `useOptimisticAction` return:
 `useOptimisticAction` additionally returns:
 | `optimisticState` | `State` | The optimistically-updated state |
 
+`useStateAction` additionally returns:
+| `formAction` | `(input) => void` | Dispatcher for `<form action={formAction}>` pattern |
+
 ## Supporting Docs
 
 - [execute vs executeAsync, result handling](./use-action.md)
+- [useStateAction in depth (decision table, formAction, initResult)](./use-state-action.md)
 - [Optimistic updates with useOptimisticAction](./optimistic-updates.md)
 - [Status lifecycle and all callbacks](./status-callbacks.md)
+- [throwOnNavigation flag](./throw-on-navigation.md)
 
 ## Anti-Patterns
 
@@ -124,9 +180,19 @@ const handleClick = async () => {
     const result = await executeAsync({ id });
     showToast(result.data);
   } catch (e) {
-    // Navigation errors (redirect, notFound) are re-thrown
-    // They'll be handled by Next.js — just let them propagate
+    // Handle non-navigation errors here if needed, then re-throw
+    // Navigation errors must propagate to Next.js
     throw e;
   }
 };
+```
+
+```ts
+// BAD: Using .action() with useStateAction — type error
+const myAction = actionClient.inputSchema(schema).action(async ({ parsedInput }) => { ... });
+useStateAction(myAction); // TypeScript error!
+
+// GOOD: Use .stateAction() for useStateAction
+const myAction = actionClient.inputSchema(schema).stateAction(async ({ parsedInput }, { prevResult }) => { ... });
+useStateAction(myAction); // Works!
 ```

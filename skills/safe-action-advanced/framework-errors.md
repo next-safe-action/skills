@@ -101,6 +101,26 @@ const handleSubmit = async () => {
 };
 ```
 
+## throwOnNavigation
+
+By default, hooks catch navigation errors and fire `onNavigation`/`onSettled` callbacks. Set `throwOnNavigation: true` to propagate navigation errors to the nearest error boundary instead:
+
+```tsx
+const { execute } = useAction(deleteAndRedirect, {
+  throwOnNavigation: true,
+  // onNavigation and onSettled are NOT available (TypeScript enforced)
+  onSuccess: ({ data }) => toast.success("Deleted!"),
+});
+```
+
+When `throwOnNavigation: true`:
+- Navigation errors are thrown during React's render phase
+- Next.js catches them and shows the appropriate error page (404, 403, 401)
+- `onNavigation` and `onSettled` callbacks cannot be used (discriminated union type enforcement)
+- For side effects, use server-side action callbacks instead (see below)
+
+See [throwOnNavigation in depth](../safe-action-hooks/throw-on-navigation.md) for complete documentation.
+
 ## Framework Errors in Middleware
 
 Framework errors thrown in middleware are also detected. If you catch errors in middleware, **always re-throw framework errors**:

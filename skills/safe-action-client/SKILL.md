@@ -38,7 +38,7 @@ createSafeActionClient(opts?)
   .bindArgsSchemas([...])      // schemas for .bind() arguments (order with inputSchema is flexible)
   .outputSchema(schema)        // validates action return value
   .action(serverCodeFn, utils?)      // creates SafeActionFn
-  .stateAction(serverCodeFn, utils?) // creates SafeStateActionFn (for useActionState)
+  .stateAction(serverCodeFn, utils?) // creates SafeStateActionFn (for useStateAction or React's useActionState)
 ```
 
 Each method returns a new client instance — the chain is immutable.
@@ -48,8 +48,8 @@ Each method returns a new client instance — the chain is immutable.
 | Entry point | Environment | Exports |
 |---|---|---|
 | `next-safe-action` | Server | `createSafeActionClient`, `createMiddleware`, `returnValidationErrors`, `flattenValidationErrors`, `formatValidationErrors`, `DEFAULT_SERVER_ERROR_MESSAGE`, error classes, all core types |
-| `next-safe-action/hooks` | Client | `useAction`, `useOptimisticAction`, hook types |
-| `next-safe-action/stateful-hooks` | Client | `useStateAction` (deprecated — use React's `useActionState` directly) |
+| `next-safe-action/hooks` | Client | `useAction`, `useOptimisticAction`, `useStateAction`, hook types |
+| `next-safe-action/stateful-hooks` | Client | `useStateAction` (re-export from hooks for backward compatibility) |
 
 ## Supporting Docs
 

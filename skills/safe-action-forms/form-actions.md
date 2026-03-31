@@ -127,6 +127,75 @@ const handleSubmit = async () => {
 };
 ```
 
+## Form with useStateAction
+
+`useStateAction` provides a `formAction` dispatcher for `<form action={formAction}>`. The server code receives `prevResult` from the previous execution:
+
+```ts
+// src/app/actions.ts
+"use server";
+
+import { z } from "zod";
+import { actionClient } from "@/lib/safe-action";
+
+export const updateProfile = actionClient
+  .inputSchema(z.object({ name: z.string().min(1), bio: z.string() }))
+  .stateAction(async ({ parsedInput, ctx }, { prevResult }) => {
+    const updated = await db.user.update(ctx.userId, parsedInput);
+    return { name: updated.name, updatedAt: new Date().toISOString() };
+  });
+```
+
+```tsx
+// src/components/profile-form.tsx
+"use client";
+
+import { useStateAction } from "next-safe-action/hooks";
+import { updateProfile } from "@/app/actions";
+
+export function ProfileForm({ user }: { user: User }) {
+  const { formAction, result, isPending, hasSucceeded, reset } = useStateAction(updateProfile, {
+    initResult: { data: { name: user.name, updatedAt: "" } },
+    onSuccess: () => toast.success("Profile updated"),
+  });
+
+  return (
+    <form action={formAction}>
+      <label>
+        Name
+        <input name="name" defaultValue={user.name} />
+        {result.validationErrors?.name?._errors?.map((e) => (
+          <span key={e} className="text-red-500 text-sm">{e}</span>
+        ))}
+      </label>
+
+      <label>
+        Bio
+        <textarea name="bio" defaultValue={user.bio ?? ""} />
+      </label>
+
+      {result.serverError && <div className="text-red-500">{result.serverError}</div>}
+
+      <button type="submit" disabled={isPending}>
+        {isPending ? "Saving..." : "Save"}
+      </button>
+      {hasSucceeded && <p>Updated at {result.data?.updatedAt}</p>}
+    </form>
+  );
+}
+```
+
+### When to Use useStateAction vs useAction for Forms
+
+| | `useAction` + `onSubmit` | `useStateAction` + `formAction` |
+|---|---|---|
+| Form submission | `e.preventDefault()` + manual extract | Native `<form action={formAction}>` |
+| Previous result | Not available | Server receives `prevResult` |
+| Callbacks | Full | Full |
+| Best for | Simple forms, programmatic triggers | Stateful forms, multi-step wizards, need `prevResult` |
+
+Use `useAction` when you don't need `prevResult` and prefer manual form handling. Use `useStateAction` when you want the `<form action={...}>` pattern with full lifecycle callbacks and `prevResult` access.
+
 ## Displaying Validation Errors
 
 The default validation error shape is nested with `_errors`:

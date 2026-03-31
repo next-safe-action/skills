@@ -115,6 +115,38 @@ useAction(myAction, {
 3. One of: `onSuccess`, `onError`, or `onNavigation`
 4. `onSettled` — always last
 
+## throwOnNavigation Mode
+
+When `throwOnNavigation: true` is set on a hook, `onNavigation` and `onSettled` callbacks are **not available**. TypeScript enforces this via a discriminated union:
+
+```ts
+// throwOnNavigation: true removes onNavigation and onSettled from the type
+const { execute } = useAction(myAction, {
+  throwOnNavigation: true,
+  onExecute: () => { /* still works */ },
+  onSuccess: ({ data }) => { /* still works */ },
+  onError: ({ error }) => { /* still works */ },
+  // onNavigation: () => {} // TypeScript error!
+  // onSettled: () => {}    // TypeScript error!
+});
+```
+
+Navigation errors are thrown during React's render phase to the nearest error boundary. In Next.js, this shows the appropriate error page (404, 403, 401).
+
+**For side effects during navigation with `throwOnNavigation: true`**, use server-side action callbacks instead:
+
+```ts
+export const myAction = actionClient.action(
+  async () => { redirect("/home"); },
+  {
+    onNavigation: async ({ navigationKind }) => { /* runs on server */ },
+    onSettled: async ({ result }) => { /* runs on server */ },
+  }
+);
+```
+
+See [throwOnNavigation in depth](./throw-on-navigation.md) for full details.
+
 ## Using Multiple Callbacks
 
 ```tsx

@@ -9,9 +9,45 @@ description: Use when integrating next-safe-action with forms -- react-hook-form
 
 | Approach | When to Use |
 |---|---|
-| `useAction` + native form | Simple forms, no complex validation UI |
+| `useAction` + native form | Simple forms, no complex validation UI, programmatic triggers |
+| `useStateAction` + `<form action={formAction}>` | Forms with state tracking, need `prevResult` access, full callbacks |
 | `useHookFormAction` (RHF adapter) | Complex forms with field-level errors, validation on change/blur |
 | `useHookFormOptimisticAction` | RHF forms with optimistic UI updates |
+
+## Quick Start — useStateAction Form
+
+```tsx
+"use client";
+
+import { useStateAction } from "next-safe-action/hooks";
+import { submitContact } from "@/app/actions";
+
+export function ContactForm() {
+  const { formAction, result, isPending, hasSucceeded } = useStateAction(submitContact, {
+    onSuccess: () => toast.success("Message sent!"),
+  });
+
+  return (
+    <form action={formAction}>
+      <input name="name" required />
+      <input name="email" type="email" required />
+      <textarea name="message" required />
+
+      {result.validationErrors?.email && (
+        <p>{result.validationErrors.email._errors?.[0]}</p>
+      )}
+      {result.serverError && <p>{result.serverError}</p>}
+      {hasSucceeded && <p>Message sent!</p>}
+
+      <button type="submit" disabled={isPending}>
+        {isPending ? "Sending..." : "Send"}
+      </button>
+    </form>
+  );
+}
+```
+
+Note: `useStateAction` requires the server action to be defined with `.stateAction()` instead of `.action()`. See the [hooks skill](../safe-action-hooks/use-state-action.md) for the full decision table on when to use `useAction` vs `useStateAction`.
 
 ## Quick Start — Native Form
 
