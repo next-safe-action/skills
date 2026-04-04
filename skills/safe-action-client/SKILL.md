@@ -32,10 +32,11 @@ export const greetUser = actionClient
 
 ```
 createSafeActionClient(opts?)
-  .use(middleware)              // repeatable, adds middleware to chain
+  .use(middleware)              // repeatable, adds pre-validation middleware
   .metadata(data)              // required if defineMetadataSchema is set
   .inputSchema(schema, utils?) // Standard Schema or async factory function
   .bindArgsSchemas([...])      // schemas for .bind() arguments (order with inputSchema is flexible)
+  .useValidated(middleware)    // repeatable, adds post-validation middleware (requires inputSchema or bindArgsSchemas before it)
   .outputSchema(schema)        // validates action return value
   .action(serverCodeFn, utils?)      // creates SafeActionFn
   .stateAction(serverCodeFn, utils?) // creates SafeStateActionFn (for useStateAction or React's useActionState)
@@ -47,7 +48,7 @@ Each method returns a new client instance — the chain is immutable.
 
 | Entry point | Environment | Exports |
 |---|---|---|
-| `next-safe-action` | Server | `createSafeActionClient`, `createMiddleware`, `returnValidationErrors`, `flattenValidationErrors`, `formatValidationErrors`, `DEFAULT_SERVER_ERROR_MESSAGE`, error classes, all core types |
+| `next-safe-action` | Server | `createSafeActionClient`, `createMiddleware`, `createValidatedMiddleware`, `returnValidationErrors`, `flattenValidationErrors`, `formatValidationErrors`, `DEFAULT_SERVER_ERROR_MESSAGE`, error classes, all core types |
 | `next-safe-action/hooks` | Client | `useAction`, `useOptimisticAction`, `useStateAction`, hook types |
 | `next-safe-action/stateful-hooks` | Client | `useStateAction` (re-export from hooks for backward compatibility) |
 

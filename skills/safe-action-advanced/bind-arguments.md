@@ -103,4 +103,4 @@ Middleware receives `bindArgsClientInputs` (raw, unvalidated):
 })
 ```
 
-Validated bind args (`bindArgsParsedInputs`) are only available in the server code function, not in middleware.
+Validated bind args (`bindArgsParsedInputs`) are available in `.useValidated()` middleware and in the server code function. In `.use()` middleware (pre-validation), only `bindArgsClientInputs` (raw) is available.

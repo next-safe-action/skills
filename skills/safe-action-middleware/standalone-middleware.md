@@ -127,3 +127,64 @@ export const actionClient = createSafeActionClient()
 
 // Action ctx: { timing: { start: number }, requestId: string, userId: string }
 ```
+
+## createValidatedMiddleware()
+
+`createValidatedMiddleware()` creates type-safe, reusable middleware that runs **after** input validation. It follows the same curried `.define()` pattern as `createMiddleware()`.
+
+```ts
+import { createValidatedMiddleware } from "next-safe-action";
+```
+
+### Basic Usage
+
+```ts
+const logValidatedInput = createValidatedMiddleware().define(
+  async ({ parsedInput, next }) => {
+    console.log("Validated input:", parsedInput);
+    return next();
+  }
+);
+
+// Use with .useValidated()
+const action = createSafeActionClient()
+  .inputSchema(z.object({ name: z.string() }))
+  .useValidated(logValidatedInput)
+  .action(async ({ parsedInput }) => {
+    // ...
+  });
+```
+
+### With Type Constraints
+
+Specify required context and input shape. The middleware will only be compatible with chains that provide matching types.
+
+```ts
+const checkOwnership = createValidatedMiddleware<{
+  ctx: { user: { id: string } };
+  parsedInput: { resourceId: string };
+}>().define(async ({ parsedInput, ctx, next }) => {
+  const resource = await db.resource.findUnique({
+    where: { id: parsedInput.resourceId },
+  });
+
+  if (resource?.ownerId !== ctx.user.id) {
+    throw new Error("Not authorized");
+  }
+
+  return next({ ctx: { resource } });
+});
+
+// Usage — parsedInput must include resourceId, ctx must include user.id
+const action = authClient
+  .inputSchema(z.object({ resourceId: z.string().uuid(), title: z.string() }))
+  .useValidated(checkOwnership)
+  .action(async ({ ctx }) => {
+    // ctx.resource is typed and available
+  });
+```
+
+### Key Difference from createMiddleware()
+
+- `createMiddleware()` produces middleware for `.use()` — receives `clientInput` (raw, unvalidated)
+- `createValidatedMiddleware()` produces middleware for `.useValidated()` — receives `parsedInput` (typed, validated) plus `clientInput`, `bindArgsParsedInputs`, `bindArgsClientInputs`

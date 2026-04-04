@@ -77,6 +77,27 @@ export const actionClient = createSafeActionClient({
 });
 ```
 
+## Logging Validated Input
+
+Use `useValidated()` to log the typed, post-validation input — especially useful when schema transforms modify the data:
+
+```ts
+// Using actionClient and logger from Structured Logging section above
+export const createUser = actionClient
+  .inputSchema(z.object({ email: z.string().email().transform((e) => e.toLowerCase()) }))
+  .useValidated(async ({ parsedInput, next, metadata }) => {
+    logger.info({
+      event: "validated_input",
+      action: metadata.actionName,
+      email: parsedInput.email, // Typed and transformed (lowercased)
+    });
+    return next();
+  })
+  .action(async ({ parsedInput }) => {
+    // parsedInput.email is lowercased
+  });
+```
+
 ## Error Reporting
 
 Send errors to external monitoring (Sentry, Datadog, etc.):

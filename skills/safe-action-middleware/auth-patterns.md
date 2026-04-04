@@ -2,6 +2,8 @@
 
 > **Note:** Action files require a `"use server"` directive — omitted from examples below for brevity.
 
+> **Tip:** Use `.use()` for auth checks that don't need input (session lookup, API key). Use `.useValidated()` for authorization checks that depend on validated input (resource ownership, org membership).
+
 ## Session Lookup
 
 ```ts
@@ -42,17 +44,14 @@ export const adminActionClient = authActionClient.use(async ({ next, ctx }) => {
 });
 
 // Organization member actions
-// IMPORTANT: clientInput is raw/unvalidated in middleware (validation runs after middleware).
-// Always validate values used for authorization decisions.
+// useValidated() runs after input validation — parsedInput is typed, no manual re-parsing needed
 export const orgActionClient = authActionClient
   .inputSchema(z.object({ orgId: z.string().uuid() }))
-  .use(async ({ next, ctx, clientInput }) => {
-    const parsed = z.object({ orgId: z.string().uuid() }).safeParse(clientInput);
-    if (!parsed.success) throw new Error("Invalid input");
-
+  .useValidated(async ({ next, ctx, parsedInput }) => {
+    // parsedInput is typed: { orgId: string }
     const membership = await db.orgMember.find({
       userId: ctx.userId,
-      orgId: parsed.data.orgId,
+      orgId: parsedInput.orgId,
     });
 
     if (!membership) {
@@ -60,7 +59,7 @@ export const orgActionClient = authActionClient
     }
 
     return next({
-      ctx: { orgRole: membership.role, orgId: parsed.data.orgId },
+      ctx: { orgRole: membership.role, orgId: parsedInput.orgId },
     });
   });
 ```
@@ -72,9 +71,9 @@ Check that the user owns the resource they're modifying:
 ```ts
 export const updatePost = authActionClient
   .inputSchema(z.object({ postId: z.string().uuid(), title: z.string() }))
-  .use(async ({ next, ctx, clientInput }) => {
-    const input = clientInput as { postId: string };
-    const post = await db.post.findById(input.postId);
+  .useValidated(async ({ next, ctx, parsedInput }) => {
+    // parsedInput is typed: { postId: string; title: string }
+    const post = await db.post.findById(parsedInput.postId);
 
     if (!post) {
       throw new Error("Post not found");
