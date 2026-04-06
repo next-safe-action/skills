@@ -44,6 +44,7 @@ npx skills add next-safe-action/skills --list
 | `safe-action-hooks` | React hooks (`useAction`, `useOptimisticAction`), status/callbacks, optimistic UI updates |
 | `safe-action-advanced` | Bind arguments, metadata schemas, framework errors, type inference utilities |
 | `safe-action-validation-errors` | Validation error handling, formatted/flattened shapes, field-level and form-level errors |
+| `safe-action-better-auth` | Better Auth adapter for typed authentication/authorization in safe actions |
 | `safe-action-testing` | Testing patterns with Vitest for server actions, middleware, hooks, and error scenarios |
 
 ## Structure
