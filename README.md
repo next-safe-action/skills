@@ -42,6 +42,7 @@ npx skills add next-safe-action/skills --list
 | `safe-action-forms` | Form integration with react-hook-form, native HTML forms, bind arguments, file uploads |
 | `safe-action-middleware` | Middleware, authentication, authorization, logging, rate limiting, reusable standalone middleware |
 | `safe-action-hooks` | React hooks (`useAction`, `useOptimisticAction`), status/callbacks, optimistic UI updates |
+| `safe-action-tanstack-query` | TanStack Query integration via `mutationOptions()`, `ActionMutationError` handling, optimistic updates, query invalidation |
 | `safe-action-advanced` | Bind arguments, metadata schemas, framework errors, type inference utilities |
 | `safe-action-validation-errors` | Validation error handling, formatted/flattened shapes, field-level and form-level errors |
 | `safe-action-better-auth` | Better Auth adapter for typed authentication/authorization in safe actions |
