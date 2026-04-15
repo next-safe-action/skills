@@ -140,7 +140,7 @@ All hooks (`useAction`, `useOptimisticAction`, `useStateAction`) return:
 | `execute(input)` | `(input) => void` | Fire-and-forget execution |
 | `executeAsync(input)` | `(input) => Promise<Result>` | Returns a promise with the result |
 | `input` | `Input \| undefined` | Last input passed to execute |
-| `result` | `SafeActionResult` | Last action result (`{ data?, serverError?, validationErrors? }`) |
+| `result` | `SafeActionResult` | Last action result — **discriminated union** of 4 branches (idle / success / serverError / validationErrors); narrowed when you check `status` or any `has*` shorthand |
 | `reset()` | `() => void` | Resets all state to initial values |
 | `status` | `HookActionStatus` | Current status string |
 | `isIdle` | `boolean` | No execution has started yet |
@@ -156,6 +156,8 @@ All hooks (`useAction`, `useOptimisticAction`, `useStateAction`) return:
 
 `useStateAction` additionally returns:
 | `formAction` | `(input) => void` | Dispatcher for `<form action={formAction}>` pattern |
+
+The hook return is itself a **discriminated union** keyed on `status` and every `has*` / `is*` shorthand (each typed as literal `true` / `false` per branch). Narrowing any discriminant narrows `result` — e.g. inside `if (hasSucceeded)`, `result.data` is `Data` (not `Data | undefined`). See [Type narrowing via hook status](./use-action.md#type-narrowing-via-hook-status).
 
 ## Supporting Docs
 

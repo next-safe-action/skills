@@ -28,7 +28,8 @@ After `await next()`, the result contains the action outcome. Inspect it for log
 .use(async ({ next, metadata }) => {
   const result = await next();
 
-  // result has: { data?, serverError?, validationErrors? }
+  // result is a discriminated union — exactly one of data / serverError / validationErrors is populated
+  // (or none, for the idle branch). Checking any one narrows the other two to undefined.
   if (result.serverError) {
     console.error(`[Action Error] ${metadata?.actionName}:`, result.serverError);
   }

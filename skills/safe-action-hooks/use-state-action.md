@@ -87,7 +87,7 @@ export function FeedbackForm() {
 | `executeAsync(input)` | `(input) => Promise<Result>` | Returns a promise with the result |
 | `formAction` | `(input) => void` | Dispatcher for `<form action={formAction}>` pattern |
 | `input` | `Input \| undefined` | Last input passed to execute/formAction |
-| `result` | `SafeActionResult` | Last action result (`{ data?, serverError?, validationErrors? }`) |
+| `result` | `SafeActionResult` | Last action result — **discriminated union** of 4 branches (idle / success / serverError / validationErrors); narrowed when you check `status` or any `has*` shorthand |
 | `reset()` | `() => void` | Resets all state to initial values |
 | `status` | `HookActionStatus` | Current status string |
 | `isIdle` | `boolean` | No execution has started yet |
@@ -100,14 +100,14 @@ export function FeedbackForm() {
 
 ## initResult Option
 
-Seed the initial result state (before any execution):
+Seed the initial result state (before any execution). The shape you pass precisely types the idle branch's `result`, so `result.data` is narrowed before any call is made:
 
 ```tsx
 const { result } = useStateAction(myStatefulAction, {
   initResult: { data: { count: 0 } },
 });
 
-// result.data?.count is 0 before first execution
+// result.data.count is 0 before first execution (narrowed — no optional chaining needed)
 ```
 
 ## formAction vs execute

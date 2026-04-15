@@ -57,15 +57,56 @@ const handleSubmit = async () => {
 
 ## Result Object
 
+`result` is a **discriminated union** with 4 mutually exclusive branches (no explicit `status` field — the discriminant is which of `data` / `serverError` / `validationErrors` is populated):
+
 ```ts
 const { result } = useAction(myAction);
 
-// result.data         — action return value (typed)
-// result.serverError  — error from handleServerError (typed)
-// result.validationErrors — input validation errors (typed)
+// Branches:
+//   idle / cleared:     { data: undefined; serverError: undefined; validationErrors: undefined }
+//   success:            { data: Data;      serverError: undefined; validationErrors: undefined }
+//   server error:       { data: undefined; serverError: SE;        validationErrors: undefined }
+//   validation error:   { data: undefined; serverError: undefined; validationErrors: VE         }
 ```
 
-The result is `{}` (empty object) initially and after `reset()`.
+Checking any one field narrows the other two to `undefined`:
+
+```ts
+if (result.data) {
+  // result.serverError      → undefined
+  // result.validationErrors → undefined
+}
+```
+
+The result is the idle branch initially and after `reset()`. Precedence when multiple outcomes coexist: `validationErrors` > `serverError` > `data`.
+
+## Type Narrowing via Hook Status
+
+The hook return itself is a discriminated union keyed on `status` — so shorthand booleans work as type guards and narrow `result` directly, without checking `result.data` first:
+
+```ts
+const action = useAction(myAction);
+
+if (action.hasSucceeded) {
+  action.result.data;        // Data (guaranteed — not Data | undefined)
+  action.result.serverError; // undefined
+}
+
+if (action.hasErrored) {
+  // result.serverError or result.validationErrors is populated
+}
+```
+
+The destructured form works the same way when keyed on `status`:
+
+```ts
+const { status, result } = useAction(myAction);
+if (status === "hasSucceeded") {
+  result.data; // narrowed to Data
+}
+```
+
+For void-returning actions, `result.data` is typed as `undefined` (not `void | undefined`) thanks to `NormalizeActionResult`.
 
 ## Sequential Actions
 

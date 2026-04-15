@@ -32,6 +32,23 @@ const {
 
 `isPending` is the most useful for disabling UI — it covers both the action execution and any React transition that follows. Note: `isTransitioning` tracks the React transition state separately (it may remain `true` briefly after `isExecuting` becomes `false`).
 
+### Shorthand booleans as type guards
+
+The hook return is a discriminated union keyed on `status`, and each of `isIdle` / `isExecuting` / `hasSucceeded` / `hasErrored` / `hasNavigated` is typed as literal `true` / `false` per branch. That makes them real type guards: checking one narrows `result` without further checks.
+
+```ts
+const action = useAction(myAction);
+
+if (action.hasSucceeded) {
+  action.result.data;        // Data (not Data | undefined)
+  action.result.serverError; // undefined
+} else if (action.hasErrored) {
+  // result.serverError or result.validationErrors is the populated one
+}
+```
+
+`isTransitioning` and `isPending` are plain `boolean` (they don't map to a single status branch) — they don't narrow.
+
 ## Callbacks
 
 All callbacks are optional and receive typed arguments:

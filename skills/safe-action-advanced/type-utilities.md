@@ -44,12 +44,17 @@ Infer the result type of an action function:
 import type { InferSafeActionFnResult } from "next-safe-action";
 
 type Result = InferSafeActionFnResult<typeof myAction>;
-// SafeActionResult<ServerError, Schema, CVE, Data>
-// {
-//   data?: { name: string; age: number };
-//   serverError?: string;
-//   validationErrors?: ValidationErrors<Schema>;
-// }
+// SafeActionResult is a 4-branch discriminated union with mutually
+// exclusive field presence (no explicit `status` field — the discriminant
+// is which of `data` / `serverError` / `validationErrors` is populated):
+//
+//   | { data?: undefined; serverError?: undefined; validationErrors?: undefined } // idle
+//   | { data: { name: string; age: number }; serverError?: undefined; validationErrors?: undefined }
+//   | { data?: undefined; serverError: string; validationErrors?: undefined }
+//   | { data?: undefined; serverError?: undefined; validationErrors: ValidationErrors<Schema> }
+//
+// Checking any one field (e.g. `if (result.data)`) narrows the other two to `undefined`.
+// Runtime precedence when multiple outcomes coexist: validationErrors > serverError > data.
 ```
 
 ## InferCtx
