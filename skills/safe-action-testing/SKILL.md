@@ -46,6 +46,10 @@ describe("createUser", () => {
 
     // OR if using throw + handleServerError:
     // expect(result.serverError).toBe("Email already in use");
+
+    // OR if using returnServerError (bypasses handleServerError,
+    // so assert the exact typed payload):
+    // expect(result.serverError).toEqual({ code: "DUPLICATE_EMAIL", message: "Email already in use" });
   });
 });
 ```

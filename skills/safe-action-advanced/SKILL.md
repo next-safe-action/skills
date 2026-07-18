@@ -61,3 +61,5 @@ export const myAction = actionClient
     // The handled server error (return of handleServerError) is thrown
   });
 ```
+
+Don't confuse this with `returnServerError()`: `throwServerError` throws the *handled* error (post-`handleServerError`) instead of returning it, while `returnServerError(payload)` returns a typed *expected* error in `result.serverError`, bypassing `handleServerError` entirely (see the safe-action-client skill's error-handling doc).

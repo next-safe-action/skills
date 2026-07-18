@@ -21,6 +21,8 @@ useOptimisticAction(safeActionFn, {
 - `currentState` — The current state from the server (typically from a Server Component prop or data fetch)
 - `updateFn` — A pure function that computes the optimistic state from the current state and the action input
 
+The same object also accepts the optional `initResult` (seed the initial `result` before any execution, captured once at mount — see [initResult](./use-action.md#initresult)) and all the usual callbacks/options.
+
 ### How It Works
 
 1. User calls `execute(input)`

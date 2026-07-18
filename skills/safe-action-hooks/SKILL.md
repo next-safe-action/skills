@@ -141,7 +141,7 @@ All hooks (`useAction`, `useOptimisticAction`, `useStateAction`) return:
 | `executeAsync(input)` | `(input) => Promise<Result>` | Returns a promise with the result |
 | `input` | `Input \| undefined` | Last input passed to execute |
 | `result` | `SafeActionResult` | Last action result — **discriminated union** of 4 branches (idle / success / serverError / validationErrors); narrowed when you check `status` or any `has*` shorthand |
-| `reset()` | `() => void` | Resets all state to initial values |
+| `reset()` | `() => void` | Resets to initial state (restores `initResult` if provided) and discards any in-flight execution |
 | `status` | `HookActionStatus` | Current status string |
 | `isIdle` | `boolean` | No execution has started yet |
 | `isExecuting` | `boolean` | Action promise is pending |
@@ -159,10 +159,14 @@ All hooks (`useAction`, `useOptimisticAction`, `useStateAction`) return:
 
 The hook return is itself a **discriminated union** keyed on `status` and every `has*` / `is*` shorthand (each typed as literal `true` / `false` per branch). Narrowing any discriminant narrows `result` — e.g. inside `if (hasSucceeded)`, `result.data` is `Data` (not `Data | undefined`). See [Type narrowing via hook status](./use-action.md#type-narrowing-via-hook-status).
 
+## initResult Option
+
+All three hooks accept `initResult` to seed the hook with a preloaded result (e.g. data fetched on the server): in the opts object for `useAction`/`useStateAction`, in the utils object (alongside `currentState`/`updateFn`) for `useOptimisticAction`. The value is captured **once at mount** (like React's `useActionState` initial state): later changes to the option are ignored, and `reset()` restores the mount value. The seeded shape precisely types the idle branch's `result`. See [initResult in depth](./use-action.md#initresult).
+
 ## Supporting Docs
 
 - [execute vs executeAsync, result handling](./use-action.md)
-- [useStateAction in depth (decision table, formAction, initResult)](./use-state-action.md)
+- [useStateAction in depth (decision table, formAction)](./use-state-action.md)
 - [Optimistic updates with useOptimisticAction](./optimistic-updates.md)
 - [Status lifecycle and all callbacks](./status-callbacks.md)
 - [throwOnNavigation flag](./throw-on-navigation.md)

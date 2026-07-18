@@ -48,7 +48,7 @@ Each method returns a new client instance — the chain is immutable.
 
 | Entry point | Environment | Exports |
 |---|---|---|
-| `next-safe-action` | Server | `createSafeActionClient`, `createMiddleware`, `createValidatedMiddleware`, `returnValidationErrors`, `flattenValidationErrors`, `formatValidationErrors`, `DEFAULT_SERVER_ERROR_MESSAGE`, error classes, all core types |
+| `next-safe-action` | Server | `createSafeActionClient`, `createMiddleware`, `createValidatedMiddleware`, `returnValidationErrors`, `returnServerError`, `flattenValidationErrors`, `formatValidationErrors`, `DEFAULT_SERVER_ERROR_MESSAGE`, error classes, all core types |
 | `next-safe-action/hooks` | Client | `useAction`, `useOptimisticAction`, `useStateAction`, hook types |
 | `next-safe-action/stateful-hooks` | Client | `useStateAction` (re-export from hooks for backward compatibility) |
 
@@ -110,6 +110,8 @@ export const myAction = actionClient
     return { success: true };
   });
 ```
+
+For expected **non-validation** business errors ("out of stock", "not found"), use `returnServerError(payload)` instead — it sets `result.serverError` to the typed payload, bypassing `handleServerError`. See [Server error handling](./error-handling.md).
 
 ## Server Code Function Parameters
 

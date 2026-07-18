@@ -78,7 +78,7 @@ if (result.data) {
 }
 ```
 
-The result is the idle branch initially and after `reset()`. Precedence when multiple outcomes coexist: `validationErrors` > `serverError` > `data`.
+The result is the idle branch initially and after `reset()` (seeded by `initResult` if provided). Precedence when multiple outcomes coexist: `validationErrors` > `serverError` > `data`.
 
 ## Type Narrowing via Hook Status
 
@@ -130,9 +130,25 @@ const handlePublish = async () => {
 };
 ```
 
+## initResult
+
+Seed the hook with a preloaded result (e.g. data fetched on the server), so `result.data` is populated before the first execution. The shape you pass precisely types the idle branch's `result`:
+
+```tsx
+const { result } = useAction(myAction, {
+  initResult: { data: initialData },
+});
+
+// result.data is narrowed before any call is made (no optional chaining needed)
+```
+
+The value is captured **once at mount**, like React's `useActionState` initial state: later changes to the option are ignored, and `reset()` restores the mount value. Also available on `useOptimisticAction` (in the utils object, alongside `currentState`/`updateFn`) and `useStateAction`.
+
 ## reset()
 
-Resets the hook to its initial state — clears result, input, status, and sets `isIdle` to `true`.
+Resets the hook to its initial state — restores `result` to `initResult` (or empty), clears input and status, and sets `isIdle` to `true`.
+
+Reset also **discards any in-flight execution**: if an action is still running when you call `reset()`, its result, errors, and callbacks are ignored when it settles, and the hook reports idle immediately (`isExecuting`/`isPending` go `false` right away).
 
 ```tsx
 const { execute, result, reset } = useAction(myAction);

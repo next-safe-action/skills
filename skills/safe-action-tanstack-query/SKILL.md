@@ -69,6 +69,8 @@ export function CreateUserForm() {
 4. **Returns `data`** directly as TanStack Query's `TData` on success
 5. **Handles navigation errors** (`redirect()`, `notFound()`, etc.) by composing `throwOnError` to always re-throw them during React's render phase
 
+Expected errors produced with `returnServerError()` land in `serverError` like any other server error, so they surface as `ActionMutationError` with the typed payload — fully compatible with `mutationOptions()` (unlike `throwServerError`).
+
 ## When to Use Which
 
 | Scenario | Recommendation |

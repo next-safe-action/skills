@@ -88,7 +88,7 @@ export function FeedbackForm() {
 | `formAction` | `(input) => void` | Dispatcher for `<form action={formAction}>` pattern |
 | `input` | `Input \| undefined` | Last input passed to execute/formAction |
 | `result` | `SafeActionResult` | Last action result — **discriminated union** of 4 branches (idle / success / serverError / validationErrors); narrowed when you check `status` or any `has*` shorthand |
-| `reset()` | `() => void` | Resets all state to initial values |
+| `reset()` | `() => void` | Resets to initial state (restores `initResult` if provided) and discards any in-flight execution |
 | `status` | `HookActionStatus` | Current status string |
 | `isIdle` | `boolean` | No execution has started yet |
 | `isExecuting` | `boolean` | Action promise is pending |
@@ -109,6 +109,8 @@ const { result } = useStateAction(myStatefulAction, {
 
 // result.data.count is 0 before first execution (narrowed — no optional chaining needed)
 ```
+
+The value is captured **once at mount**, like React's `useActionState` initial state: later changes to the option are ignored, and `reset()` restores the mount value. `initResult` is not unique to `useStateAction` — `useAction` and `useOptimisticAction` accept it too (see [initResult](./use-action.md#initresult)).
 
 ## formAction vs execute
 

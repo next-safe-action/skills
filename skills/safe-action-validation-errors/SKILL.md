@@ -32,6 +32,8 @@ Mirrors the schema structure with `_errors` arrays at each level:
 
 Throws a `ActionServerValidationError` that the framework catches and returns as `result.validationErrors`. **It never returns** — it always throws.
 
+> For expected **non-validation** errors ("out of stock", "not found"), the sibling helper `returnServerError(payload)` works the same way (throws internally, never returns) but sets `result.serverError` to the typed payload, bypassing `handleServerError`. See the safe-action-client skill.
+
 ```ts
 "use server";
 

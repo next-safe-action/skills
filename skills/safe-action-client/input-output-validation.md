@@ -88,6 +88,8 @@ export const getUser = actionClient
   });
 ```
 
+Schema **transforms and defaults are applied**: just like input validation, the returned `data` (and the `data` received by server-side `onSuccess`/`onSettled` callbacks) is the parsed output of the schema, not the raw return value. A Zod `.transform()` or `.default()` in the output schema takes effect on the client.
+
 ## Custom Validation Error Shape
 
 Override the default validation error shape per-action:

@@ -38,8 +38,9 @@ const { form, action, handleSubmitWithAction, resetFormAndAction } = useHookForm
 
 ```ts
 {
-  // Callbacks for the underlying useAction
+  // Options and callbacks for the underlying useAction (typed as HookBaseOptions)
   actionProps: {
+    throwOnNavigation: true, // hook options pass through too, not just callbacks
     onSuccess: ({ data }) => { ... },
     onError: ({ error }) => { ... },
     onSettled: ({ result }) => { ... },

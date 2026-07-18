@@ -4,8 +4,9 @@
 
 1. An error is thrown inside server code or middleware
 2. Framework errors (redirect, notFound, etc.) are detected and re-thrown — they bypass `handleServerError`
-3. All other errors pass through `handleServerError`
-4. The return value of `handleServerError` becomes `result.serverError` on the client
+3. Errors produced by `returnServerError()` are caught by the builder and set `result.serverError` directly — they also bypass `handleServerError`
+4. All other errors pass through `handleServerError`
+5. The return value of `handleServerError` becomes `result.serverError` on the client
 
 ## handleServerError
 
@@ -31,9 +32,64 @@ export const actionClient = createSafeActionClient({
 });
 ```
 
+## Expected Server Errors with returnServerError
+
+Not every server error is unexpected. For known business failures ("out of stock", "not found", "quota exceeded"), use `returnServerError()` to send a typed value to the client. It is set as `result.serverError` **as-is, bypassing `handleServerError`**:
+
+```ts
+import { returnServerError } from "next-safe-action";
+
+export const buyProduct = actionClient
+  .inputSchema(schema)
+  .action(async ({ parsedInput }) => {
+    const product = await db.product.find(parsedInput.id);
+
+    if (!product.inStock) {
+      // Throws internally — code after this line never runs
+      returnServerError({ code: "OUT_OF_STOCK", message: "This product is sold out" });
+    }
+
+    // ...
+  });
+```
+
+Key facts:
+
+- Like `returnValidationErrors`, it **throws internally** (returns `never`), so the remaining server code doesn't execute. It also works from middleware.
+- The payload must be **JSON-serializable** (no circular references, BigInts, functions, etc.). Non-serializable payloads fail loudly with a `TypeError` on the server (handled by `handleServerError` like any unexpected error). The payload is encoded onto the error `digest`, so it also works inside Next.js `"use cache"` scopes with `cacheComponents` enabled.
+- The value should conform to the client's `ServerError` type (inferred from `handleServerError`'s return type) — but this is **not enforced automatically**, see below.
+
+### Typing the Error Payload
+
+`returnServerError<SE>(serverError: SE): never` infers `SE` from the argument, so there's no automatic type-level link to the client's `ServerError` type. Enforce it with:
+
+```ts
+// 1. Declare the error union on handleServerError — this types result.serverError on the client
+type AppServerError =
+  | { code: "INTERNAL"; message: string }
+  | { code: "OUT_OF_STOCK"; message: string }
+  | { code: "NOT_FOUND"; message: string };
+
+const actionClient = createSafeActionClient({
+  handleServerError: (e): AppServerError => ({ code: "INTERNAL", message: e.message }),
+});
+
+// 2. Enforce the payload at the call site
+returnServerError<AppServerError>({ code: "OUT_OF_STOCK", message: "Sold out" });
+// or
+returnServerError({ code: "OUT_OF_STOCK", message: "Sold out" } satisfies AppServerError);
+
+// 3. Recommended: export a typed alias next to your action client (lib/safe-action.ts)
+export const returnAppError: (e: AppServerError) => never = returnServerError;
+```
+
+Without one of these, `returnServerError({ anything: true })` compiles even though `result.serverError` claims to be `AppServerError` on the client. Prefer the typed alias (technique 3) as the app-wide default.
+
+On the client, `result.serverError` narrows as a normal discriminated union: `if (serverError?.code === "OUT_OF_STOCK") { ... }`.
+
 ## Custom Error Classes
 
-Define domain-specific error classes to enable structured error handling:
+For **unexpected/thrown** errors mapped through `handleServerError` (as opposed to expected errors returned via `returnServerError`), define domain-specific error classes to enable structured error handling:
 
 ```ts
 // src/lib/errors.ts
@@ -138,7 +194,7 @@ import {
 } from "next-safe-action";
 ```
 
-> **Note:** `ActionServerValidationError` is internal — used by `returnValidationErrors()` but not exported from the package.
+> **Note:** `ActionServerValidationError` (used by `returnValidationErrors()`) and `ActionServerError` (used by `returnServerError()`) are internal — not exported from the package. The helper functions are the entire public API.
 
 ## throwValidationErrors
 
