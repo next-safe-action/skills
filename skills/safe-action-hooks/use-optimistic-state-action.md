@@ -21,7 +21,14 @@ Confirmed state is the **more recent** of:
 1. the action's successful `data`, and
 2. the `currentState` option.
 
-Recency is measured by **arrival**: any new `currentState` identity supersedes the committed result. An action that returns the full next state owns the confirmed value; an action that returns nothing leaves `currentState` authoritative; a revalidated Server Component payload beats a stale client-side fold.
+"More recent" is answered **twice**, because the confirmed value feeds two different things:
+
+- **What you render** goes by **arrival**. Any new `currentState` identity supersedes the committed result, so a revalidated Server Component payload beats a stale client-side fold even when the snapshot was taken before the newest write. That is why every action writing rendered state must revalidate it.
+- **The base the next queued dispatch sends as `prevResult`** goes by **write order**. A `currentState` that commits while an action is still running was rendered before that action wrote, so the action's own `data` wins when it settles. A `currentState` arriving with nothing in flight wins instead.
+
+The second rule matters when a payload lands mid-queue: it usually acknowledges the dispatch *before* the running one, and treating it as newer would drop the running dispatch's write and let the dispatch after it overwrite the change.
+
+An action that returns the full next state owns the confirmed value; an action that returns nothing leaves `currentState` authoritative.
 
 ## Pick By Action Kind
 
@@ -185,6 +192,25 @@ Recency is arrival order. If one action revalidates and another does not, the ne
 
 (A hook whose `currentState` never changes identity — the constant base of Shape 2, or a purely client-held baseline — keeps the action's returned data authoritative without any revalidation. That is the exception, not the default.)
 
+### A `currentState` that arrives mid-queue cuts settled payloads
+
+React holds an optimistic payload only while its own dispatch is pending. This hook keeps every payload alive for the whole queue instead, which is what lets three overlapping moves stay on screen together. It works because the confirmed base does not normally advance until the queue drains: in Next.js the RSC payload of a completed write commits on the same suspended lane the queue waits on, so it lands with everything else.
+
+A `currentState` that commits **while the queue still has work** is the exception: an urgent update, such as a socket push, a `router.refresh()` outside a transition, or a parent re-rendering with a new value. The base then moves under payloads that are still attached, and the ones whose dispatch already settled are already accounted for in the new base.
+
+Those payloads stop folding at that point. The pending ones keep folding, so the change the user is still waiting on stays visible. Nothing is required from you here, but it explains why an external revision arriving mid-queue does not double-count the writes it already carries.
+
+### The queue assumes you are the only writer
+
+Every dispatch sends the client's confirmed state as `prevResult`, and the action writes the next state from it. That is last-write-wins by construction, and it is correct while the user is the only person changing this data.
+
+It is not correct with a second writer (another tab, another user, a background job). When an external change lands while one of your dispatches is in flight:
+
+- The page **shows** it, because a new `currentState` always supersedes the committed result.
+- The next queued dispatch does **not** build on it. It builds on what the running action returned, which is what the server held after that write, and the external change was already overwritten there.
+
+The client does not invent that conflict; it reports one the server already resolved in favour of the later write. If losing that change is unacceptable, resolve it on the server: write a delta instead of the whole state, or guard the write with a version column, an `updatedAt` check, or a transaction. No client-side base can fix it, because the client cannot know what reached the server first. If data changes independently of the user often enough to matter, this hook is the wrong tool.
+
 ### `currentState` is compared by identity
 
 The hook compares `currentState !== previousCurrentState`. A value with a new identity on every render is read as "the server sent newer data", so confirmed state can never advance past it: the fold drains on every commit and the change appears to revert.
@@ -280,6 +306,7 @@ Never use `initResult.data` as a substitute for `currentState`.
 - Navigation errors **reject** (re-throw them so Next.js can handle the navigation).
 - A raw thrown error **rejects**, and can also reject the promises of dispatches queued behind it, because React clears its whole action queue when an Action rejects.
 - A raw error from a dispatch already made stale by `reset()` does not cancel fresh queued work.
+- A queued dispatch that `reset()` skipped resolves with `{}`: it never reached the server.
 
 ### `reset()`
 
@@ -287,7 +314,8 @@ Client-side only:
 
 - Restores the mount-time `currentState` and `initResult`; the next change folds over that restored baseline instead of briefly re-showing the state that was just discarded.
 - Reports idle immediately, and masks the pre-reset optimistic and result state.
-- Does **not** cancel server work already dispatched, and does not stop a pending `executeAsync` promise from settling. It only prevents stale results from becoming the new client base.
+- Does **not** recall the dispatch already talking to the server: its write lands, and a `revalidatePath` inside it can still push a fresh `currentState`. Its result and callbacks are ignored.
+- **Skips** every dispatch still waiting its turn in the queue. Nothing was sent for those yet, so the action never runs and no write happens; their `executeAsync` promises resolve with `{}` and none of their callbacks fire. Running them would write and revalidate *after* the reset, pulling confirmed state into an order the user already discarded.
 - Does **not** undo writes the server already accepted. If the server state must go back too, call an action that resets it (and revalidates).
 
 ## Anti-Patterns

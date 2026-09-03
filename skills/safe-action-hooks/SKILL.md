@@ -210,7 +210,7 @@ All hooks (`useAction`, `useOptimisticAction`, `useStateAction`, `useOptimisticS
 | `executeAsync(input)` | `(input) => Promise<Result>` | Returns a promise with the result |
 | `input` | `Input \| undefined` | Last input dispatched (via `execute`, `executeAsync`, or `formAction`) |
 | `result` | `SafeActionResult` | Last action result — **discriminated union** of 4 branches (idle / success / serverError / validationErrors); narrowed when you check `status` or any `has*` shorthand |
-| `reset()` | `() => void` | Resets client state to initial (restores `initResult` if provided) and ignores the result of any in-flight execution. It does **not** cancel the server call |
+| `reset()` | `() => void` | Resets client state to initial (restores `initResult` if provided) and ignores the result of any in-flight execution. It does **not** cancel the server call already in flight. On the queued hooks (`useStateAction`, `useOptimisticStateAction`) it also skips every dispatch still waiting its turn: their action never runs and no write happens |
 | `status` | `HookActionStatus` | Current status string |
 | `isIdle` | `boolean` | No execution has started yet |
 | `isExecuting` | `boolean` | Action promise is pending |
