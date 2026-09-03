@@ -125,10 +125,18 @@ From `next-safe-action/hooks`:
 import type {
   InferUseActionHookReturn,
   InferUseOptimisticActionHookReturn,
+  InferUseStateActionHookReturn,
 } from "next-safe-action/hooks";
 
 type ActionReturn = InferUseActionHookReturn<typeof myAction>;
 type OptimisticReturn = InferUseOptimisticActionHookReturn<typeof myAction, MyState>;
+type StateReturn = InferUseStateActionHookReturn<typeof myStatefulAction>;
+```
+
+There is no `Infer` helper for `useOptimisticStateAction`. Use the hook return type directly:
+
+```ts
+import type { UseOptimisticStateActionHookReturn } from "next-safe-action/hooks";
 ```
 
 From `@next-safe-action/adapter-react-hook-form/hooks`:

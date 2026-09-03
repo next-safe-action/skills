@@ -78,6 +78,8 @@ Expected errors produced with `returnServerError()` land in `serverError` like a
 | New Next.js project without TanStack Query | Built-in hooks |
 | Simple form submissions and button actions | Built-in hooks |
 | Instant optimistic UI via React's `useOptimistic` | Built-in hooks (`useOptimisticAction`) |
+| Overlapping writes that must be queued and accumulate (reorder, Kanban) | Built-in hooks (`useOptimisticStateAction`) |
+| Data that changes independently of the user (sockets, polling, background refresh) | TanStack Query / SWR for the reads, adapter for the mutations |
 | Zero additional dependencies | Built-in hooks |
 | Already using TanStack Query for data fetching | Adapter |
 | Already using tRPC + TanStack Query | Adapter |
@@ -122,6 +124,8 @@ For data fetching: use Server Components (server-side), Route Handlers + `useQue
 | `@next-safe-action/adapter-tanstack-query` | `mutationOptions`, `ActionMutationError`, `isActionMutationError`, `hasServerError`, `hasValidationErrors`, types | Client |
 
 ## Important Constraints
+
+**Only works with stateless `.action()` functions.** `mutationOptions()` accepts a `SingleInputActionFn`, so a `.stateAction()` cannot be wrapped. For stateful actions use `useStateAction` / `useOptimisticStateAction` from `next-safe-action/hooks`.
 
 **Only works with non-throwing actions.** Do NOT use `throwValidationErrors: true` or `throwServerError: true` with actions passed to `mutationOptions()`. The adapter inspects the result envelope for errors. If errors are thrown instead of returned, the adapter cannot extract structured error data, and you lose type-safe error handling. TypeScript enforces this via `NonThrowingActionConstraint`.
 

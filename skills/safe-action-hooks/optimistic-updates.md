@@ -8,6 +8,8 @@ Wraps `React.useOptimistic` to immediately update the UI while the server action
 import { useOptimisticAction } from "next-safe-action/hooks";
 ```
 
+> **Last-write-wins.** When two executions overlap, the newer response is kept and the older discarded. That is correct for *replace* semantics (saving a title, toggling a like). If changes must **accumulate** — a second write building on the result of the first — use [`useOptimisticStateAction`](./use-optimistic-state-action.md) with a `.stateAction()` instead.
+
 ### Required Props
 
 ```ts

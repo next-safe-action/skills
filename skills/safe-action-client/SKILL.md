@@ -39,7 +39,7 @@ createSafeActionClient(opts?)
   .useValidated(middleware)    // repeatable, adds post-validation middleware (requires inputSchema or bindArgsSchemas before it)
   .outputSchema(schema)        // validates action return value
   .action(serverCodeFn, utils?)      // creates SafeActionFn
-  .stateAction(serverCodeFn, utils?) // creates SafeStateActionFn (for useStateAction or React's useActionState)
+  .stateAction(serverCodeFn, utils?) // creates SafeStateActionFn (for useStateAction, useOptimisticStateAction, or React's useActionState)
 ```
 
 Each method returns a new client instance — the chain is immutable.
@@ -49,7 +49,7 @@ Each method returns a new client instance — the chain is immutable.
 | Entry point | Environment | Exports |
 |---|---|---|
 | `next-safe-action` | Server | `createSafeActionClient`, `createMiddleware`, `createValidatedMiddleware`, `returnValidationErrors`, `returnServerError`, `flattenValidationErrors`, `formatValidationErrors`, `DEFAULT_SERVER_ERROR_MESSAGE`, error classes, all core types |
-| `next-safe-action/hooks` | Client | `useAction`, `useOptimisticAction`, `useStateAction`, hook types |
+| `next-safe-action/hooks` | Client | `useAction`, `useOptimisticAction`, `useStateAction`, `useOptimisticStateAction`, hook types |
 | `next-safe-action/stateful-hooks` | Client | `useStateAction` (re-export from hooks for backward compatibility) |
 
 ## Supporting Docs

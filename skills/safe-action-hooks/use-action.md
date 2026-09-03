@@ -19,7 +19,7 @@ const { execute, result, isPending } = useAction(myAction, {
 <button onClick={() => execute({ name: "Alice" })}>Submit</button>
 ```
 
-Internally, `execute` runs inside `React.startTransition` with a `setTimeout(0)` for deferred state updates.
+Internally, `execute` runs inside `React.startTransition`.
 
 ## executeAsync — Awaitable Result
 
@@ -142,13 +142,13 @@ const { result } = useAction(myAction, {
 // result.data is narrowed before any call is made (no optional chaining needed)
 ```
 
-The value is captured **once at mount**, like React's `useActionState` initial state: later changes to the option are ignored, and `reset()` restores the mount value. Also available on `useOptimisticAction` (in the utils object, alongside `currentState`/`updateFn`) and `useStateAction`.
+The value is captured **once at mount**, like React's `useActionState` initial state: later changes to the option are ignored, and `reset()` restores the mount value. Also available on `useStateAction`, and on `useOptimisticAction` / `useOptimisticStateAction` (in the utils object, alongside `currentState`/`updateFn`).
 
 ## reset()
 
 Resets the hook to its initial state — restores `result` to `initResult` (or empty), clears input and status, and sets `isIdle` to `true`.
 
-Reset also **discards any in-flight execution**: if an action is still running when you call `reset()`, its result, errors, and callbacks are ignored when it settles, and the hook reports idle immediately (`isExecuting`/`isPending` go `false` right away).
+Reset also **invalidates any in-flight execution on the client**: if an action is still running when you call `reset()`, its result, errors, and callbacks are ignored when it settles, and the hook reports idle immediately (`isExecuting`/`isPending` go `false` right away). It does **not** cancel the server call, and does not undo a write the server already accepted.
 
 ```tsx
 const { execute, result, reset } = useAction(myAction);

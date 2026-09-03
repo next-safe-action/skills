@@ -13,6 +13,7 @@ description: Use when integrating next-safe-action with forms -- react-hook-form
 | `useStateAction` + `<form action={formAction}>` | Forms with state tracking, need `prevResult` access, full callbacks |
 | `useHookFormAction` (RHF adapter) | Complex forms with field-level errors, validation on change/blur |
 | `useHookFormOptimisticAction` | RHF forms with optimistic UI updates |
+| `useOptimisticStateAction` | Instant UI where overlapping writes must be queued and accumulate (see the [hooks skill](../safe-action-hooks/use-optimistic-state-action.md)) |
 
 ## Quick Start — useStateAction Form
 
@@ -47,7 +48,7 @@ export function ContactForm() {
 }
 ```
 
-Note: `useStateAction` requires the server action to be defined with `.stateAction()` instead of `.action()`. See the [hooks skill](../safe-action-hooks/use-state-action.md) for the full decision table on when to use `useAction` vs `useStateAction`.
+Note: `useStateAction` requires the server action to be defined with `.stateAction()` instead of `.action()`, and `<form action={formAction}>` passes raw `FormData`, so its input schema must parse `FormData` (e.g. `zfd.formData({...})` from `zod-form-data`). See the [hooks skill](../safe-action-hooks/use-state-action.md) for the full decision table on when to use `useAction` vs `useStateAction`.
 
 ## Quick Start — Native Form
 
