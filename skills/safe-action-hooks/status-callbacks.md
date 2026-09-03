@@ -12,8 +12,8 @@ idle → executing → hasSucceeded
 |---|---|
 | `idle` | No execution has started (or `reset()` was called) |
 | `executing` | Action promise is pending |
-| `hasSucceeded` | Last execution returned `data` |
-| `hasErrored` | Last execution had `serverError` or `validationErrors` |
+| `hasSucceeded` | Last execution completed without errors (a void action succeeds with `result.data` still `undefined`) |
+| `hasErrored` | Last execution had `serverError` or `validationErrors`, or threw (a raw throw leaves `result` empty) |
 | `hasNavigated` | Last execution triggered a navigation (redirect, notFound, etc.) |
 
 ## Shorthand Booleans
@@ -23,14 +23,14 @@ const {
   isIdle,          // status === "idle"
   isExecuting,     // status === "executing"
   isTransitioning, // React transition is still pending (after action resolves)
-  isPending,       // isExecuting || isTransitioning
+  isPending,       // isExecuting || isTransitioning, unless reset
   hasSucceeded,    // status === "hasSucceeded"
   hasErrored,      // status === "hasErrored"
   hasNavigated,    // status === "hasNavigated"
 } = useAction(myAction);
 ```
 
-`isPending` is the most useful for disabling UI — it covers both the action execution and any React transition that follows. Note: `isTransitioning` tracks the React transition state separately (it may remain `true` briefly after `isExecuting` becomes `false`).
+`isPending` is the most useful for disabling UI — it covers both the action execution and any React transition that follows. Note: `isTransitioning` tracks the React transition state separately (it may remain `true` briefly after `isExecuting` becomes `false`). After `reset()`, `isPending` is `false` immediately, even while the interrupted transition is still settling.
 
 ### Shorthand booleans as type guards
 
@@ -55,7 +55,7 @@ All callbacks are optional and receive typed arguments:
 
 ### onExecute
 
-Fires immediately when `execute` or `executeAsync` is called.
+Fires immediately when a dispatch starts, whether through `execute`, `executeAsync`, or `formAction`.
 
 ```ts
 useAction(myAction, {
@@ -67,7 +67,7 @@ useAction(myAction, {
 
 ### onSuccess
 
-Fires when the action returns data without errors.
+Fires when the action completes without errors. For a void action it still fires, with `data` `undefined`.
 
 ```ts
 useAction(myAction, {
@@ -87,7 +87,7 @@ useAction(myAction, {
   onError: ({ error, input }) => {
     // error.serverError    — from handleServerError
     // error.validationErrors — from schema validation / returnValidationErrors
-    // error.thrownError    — non-navigation error thrown by executeAsync
+    // error.thrownError    — non-navigation error thrown by the action or a callback
 
     if (error.serverError) {
       toast.error(error.serverError);
@@ -114,7 +114,7 @@ useAction(myAction, {
 
 ### onSettled
 
-Fires after any outcome (success, error, or navigation). Always runs.
+Fires after any outcome (success, error, or navigation). Two exceptions: it is not available (nor fired) when `throwOnNavigation: true`, and a dispatch made stale by `reset()` does not report.
 
 ```ts
 useAction(myAction, {
@@ -127,10 +127,12 @@ useAction(myAction, {
 
 ## Callback Execution Order
 
-1. `onExecute` — immediately on execute
+1. `onExecute` — immediately on dispatch
 2. Action runs on server
 3. One of: `onSuccess`, `onError`, or `onNavigation`
-4. `onSettled` — always last
+4. `onSettled` — last
+
+With `useOptimisticStateAction` these fire **per dispatch and before React commits**, not from a render effect. See [useOptimisticStateAction](./use-optimistic-state-action.md#callbacks-fire-per-dispatch).
 
 ## throwOnNavigation Mode
 

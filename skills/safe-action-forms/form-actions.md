@@ -131,15 +131,20 @@ const handleSubmit = async () => {
 
 `useStateAction` provides a `formAction` dispatcher for `<form action={formAction}>`. The server code receives `prevResult` from the previous execution:
 
+`<form action={formAction}>` submits raw `FormData`, so the schema must parse `FormData`:
+
 ```ts
 // src/app/actions.ts
 "use server";
 
 import { z } from "zod";
+import { zfd } from "zod-form-data";
 import { actionClient } from "@/lib/safe-action";
 
 export const updateProfile = actionClient
-  .inputSchema(z.object({ name: z.string().min(1), bio: z.string() }))
+  .inputSchema(
+    zfd.formData({ name: zfd.text(z.string().min(1)), bio: zfd.text(z.string()) })
+  )
   .stateAction(async ({ parsedInput, ctx }, { prevResult }) => {
     const updated = await db.user.update(ctx.userId, parsedInput);
     return { name: updated.name, updatedAt: new Date().toISOString() };
@@ -192,9 +197,10 @@ export function ProfileForm({ user }: { user: User }) {
 | Form submission | `e.preventDefault()` + manual extract | Native `<form action={formAction}>` |
 | Previous result | Not available | Server receives `prevResult` |
 | Callbacks | Full | Full |
-| Best for | Simple forms, programmatic triggers | Stateful forms, multi-step wizards, need `prevResult` |
+| Concurrency | Executions can overlap (last-write-wins) | Dispatches are queued (each waits for the previous) |
+| Best for | Simple forms, programmatic triggers | Stateful forms, multi-step wizards, need `prevResult`, writes that must not overtake each other |
 
-Use `useAction` when you don't need `prevResult` and prefer manual form handling. Use `useStateAction` when you want the `<form action={...}>` pattern with full lifecycle callbacks and `prevResult` access.
+Use `useAction` when you don't need `prevResult` and prefer manual form handling. Use `useStateAction` when you want the `<form action={...}>` pattern with full lifecycle callbacks, `prevResult` access, or serialized writes. For instant UI on top of those queued writes, use [`useOptimisticStateAction`](../safe-action-hooks/use-optimistic-state-action.md).
 
 ## Displaying Validation Errors
 

@@ -5,8 +5,8 @@
 Next.js uses thrown errors for navigation: `redirect()`, `notFound()`, `forbidden()`, `unauthorized()`. next-safe-action detects these and handles them specially:
 
 1. Framework errors bypass `handleServerError` — they are **not** treated as server errors
-2. The error is stored and **re-thrown** after callbacks run, so Next.js handles the navigation
-3. The `navigationKind` is set on the result, and `onNavigation` callbacks fire
+2. **On the server**, the action re-throws the error after its server-side callbacks run, so Next.js performs the navigation
+3. **On the client**, the hook catches the rejection, sets `status` to `"hasNavigated"`, and fires `onNavigation` / `onSettled` with the `navigationKind`. It does *not* re-throw by default — `result` is the empty branch, and `navigationKind` is a callback argument, not a field on `SafeActionResult`
 
 ## Using Navigation in Actions
 
@@ -73,12 +73,11 @@ type NavigationKind = "redirect" | "notFound" | "forbidden" | "unauthorized" | "
 
 ### With useAction
 
-Navigation errors are caught, stored, and **re-thrown** by the hook. Next.js picks them up from the re-throw.
+Navigation errors are caught by the hook and reported as status + callbacks; the component stays mounted. Set `throwOnNavigation: true` to propagate them to the nearest error boundary instead (see below).
 
 ```tsx
 const { execute, hasNavigated, status } = useAction(createPost, {
   onNavigation: ({ navigationKind }) => {
-    // Fires before the re-throw
     console.log(`Navigating: ${navigationKind}`);
   },
 });
