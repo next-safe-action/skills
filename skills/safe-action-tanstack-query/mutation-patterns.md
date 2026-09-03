@@ -176,7 +176,7 @@ const mutation = useMutation(mutationOptions(toggleTodoAction, {
 }));
 ```
 
-**Contrast with built-in hooks:** `useOptimisticAction` uses React's `useOptimistic` for automatic rollback. The TanStack Query approach gives you more control (manual cache manipulation) but requires more boilerplate. Choose based on whether you're already using TanStack Query for data fetching.
+**Contrast with built-in hooks:** `useOptimisticAction` uses React's `useOptimistic` for automatic rollback (last-write-wins), and `useOptimisticStateAction` does the same for queued, accumulating writes on `.stateAction()` functions. The TanStack Query approach gives you more control (manual cache manipulation) but requires more boilerplate. Choose based on whether you're already using TanStack Query for data fetching.
 
 ## Retry Logic
 
